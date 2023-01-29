@@ -3,14 +3,20 @@ import twitterLogo from './assets/twitter-logo.svg';
 import './App.css';
 
 // Constants
-const TWITTER_HANDLE = '_buildspace';
+const TWITTER_HANDLE = '0xSilkweave';
 const TWITTER_LINK = `https://twitter.com/${TWITTER_HANDLE}`;
 
-const App = () => {
-  // State
-  const [walletAddress, setWalletAddress] = useState(null);
+const TEST_GIFS = [
+	'https://media3.giphy.com/media/mlvseq9yvZhba/giphy.gif',
+	'https://media.glamour.com/photos/580e1fc08bd9950546d001f6/master/pass/giphy%20(11).gif'
+]
 
-  // Actions
+const App = () => {
+
+const [walletAddress, setWalletAddress] = useState(null);
+const [inputValue, setInputValue] = useState('');
+const [gifList, setGifList] = useState([]);
+
   const checkIfWalletIsConnected = async () => {
     if (window?.solana?.isPhantom) {
       console.log('Phantom wallet found!');
@@ -19,19 +25,15 @@ const App = () => {
         'Connected with Public Key:',
         response.publicKey.toString()
       );
-
-      /*
-       * Set the user's publicKey in state to be used later!
-       */
       setWalletAddress(response.publicKey.toString());
     } else {
-      alert('Solana object not found! Get a Phantom Wallet 👻');
+      alert('Solana Wallet not found. Get a Phantom Wallet 👻');
     }
   };
 
 const connectWallet = async () => {
   const { solana } = window;
-
+  
   if (solana) {
     const response = await solana.connect();
     console.log('Connected with Public Key:', response.publicKey.toString());
@@ -39,6 +41,65 @@ const connectWallet = async () => {
   }
 };
 
+const onInputChange = (event) => {
+  const { value } = event.target;
+  setInputValue(value);
+};
+
+const renderConnectedContainer = () => (
+    <div className="connected-container">
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          sendGif();
+        }}
+      >
+        <input
+          type="text"
+          placeholder="Enter gif link!"
+          value={inputValue}
+          onChange={onInputChange}
+        />
+        <button type="submit" className="cta-button submit-gif-button">
+          Submit
+        </button>
+      </form>
+      <div className="gif-grid">
+        {}
+        {gifList.map((gif) => (
+          <div className="gif-item" key={gif}>
+            <img src={gif} alt={gif} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const sendGif = async () => {
+  if (inputValue.length > 0) {
+    console.log('Gif link:', inputValue);
+    setGifList([...gifList, inputValue]);
+    setInputValue('');
+  } else {
+    console.log('Empty input. Try again.');
+  }
+};
+
+useEffect(() => {
+  const onLoad = async () => {
+    await checkIfWalletIsConnected();
+  };
+  window.addEventListener('load', onLoad);
+  return () => window.removeEventListener('load', onLoad);
+}, []);
+
+useEffect(() => {
+  if (walletAddress) {
+    console.log('Fetching GIF list...');
+    setGifList(TEST_GIFS);
+  }
+}, [walletAddress]);
+  
   const renderNotConnectedContainer = () => (
     <button
       className="cta-button connect-wallet-button"
@@ -48,26 +109,17 @@ const connectWallet = async () => {
     </button>
   );
 
-  // UseEffects
-  useEffect(() => {
-    const onLoad = async () => {
-      await checkIfWalletIsConnected();
-    };
-    window.addEventListener('load', onLoad);
-    return () => window.removeEventListener('load', onLoad);
-  }, []);
-
   return (
     <div className="App">
-			{/* This was solely added for some styling fanciness */}
-			<div className={walletAddress ? 'authed-container' : 'container'}>
+      <div className="container">
         <div className="header-container">
-          <p className="header">🖼 GIF Portal</p>
+          <p className="header">🖼 Solana GIF Friends</p> 
           <p className="sub-text">
-            View your GIF collection in the metaverse ✨
+            View your beautiful GIFs on Solana! 🪐
           </p>
-          {/* Add the condition to show this only if we don't have a wallet address */}
           {!walletAddress && renderNotConnectedContainer()}
+          {}
+          {walletAddress && renderConnectedContainer()}
         </div>
         <div className="footer-container">
           <img alt="Twitter Logo" className="twitter-logo" src={twitterLogo} />
@@ -76,11 +128,10 @@ const connectWallet = async () => {
             href={TWITTER_LINK}
             target="_blank"
             rel="noreferrer"
-          >{`built on @${TWITTER_HANDLE}`}</a>
+          >{`built by @${TWITTER_HANDLE}`}</a>
         </div>
       </div>
     </div>
   );
-};
-
+  }
 export default App;
